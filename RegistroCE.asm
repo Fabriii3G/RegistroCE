@@ -1,19 +1,18 @@
-org 100h    ; 
+org 100h    
 
 start:
     call Cls             ; limpiar pantalla
     call MostrarMenu     ; desplegar menu principal
     call LeerOpcion      ; leer opcion del usuario
-    jmp start            ; volver al menu (bucle principal)
+    jmp  start           ; volver al menu (bucle principal)
 
-
-; Subrutina: MostrarMenu
+;----------------------------------------------------
+; MostrarMenu
+;----------------------------------------------------
 MostrarMenu proc
-    ; Titulo
     mov dx, offset titulo
     call PrintString
 
-    ; Opciones
     mov dx, offset op1
     call PrintString
     mov dx, offset op2
@@ -30,18 +29,22 @@ MostrarMenu proc
     ret
 MostrarMenu endp
 
-
-; Subrutina: LeerOpcion
+;----------------------------------------------------
+; LeerOpcion
+;----------------------------------------------------
 LeerOpcion proc
     mov ah, 1       ; leer caracter (espera tecla)
     int 21h
     mov opcion, al  ; guardar la tecla presionada
 
+    cmp al, '5'     ; ¿es la opción 5?
+    je  Salir       ; si sí, despedida y salir
+
     ; mostrar salto de linea
     mov dx, offset salto
     call PrintString
 
-    ; Solo se muestra lo que elige el usuario
+    ; mostrar la tecla elegida
     mov dl, opcion
     mov ah, 2
     int 21h
@@ -51,17 +54,18 @@ LeerOpcion proc
     ret
 LeerOpcion endp
 
-
-; Subrutina: PrintString
+;----------------------------------------------------
+; PrintString
+;----------------------------------------------------
 PrintString proc
     mov ah, 9
     int 21h
     ret
 PrintString endp
 
-
-
-; Subrutina: Cls (limpiar pantalla)
+;----------------------------------------------------
+; Cls
+;----------------------------------------------------
 Cls proc
     mov ax, 0600h
     mov bh, 07
@@ -75,19 +79,26 @@ Cls proc
     ret
 Cls endp
 
+;----------------------------------------------------
+; Salir
+;----------------------------------------------------
+Salir:
+    mov dx, offset mensajeSalir
+    call PrintString
+    mov ax, 4C00h          ; terminar programa
+    int 21h
 
+;----------------------
 ; Datos
-titulo  db 0Dh,0Ah, '|RegistroCE|',0Dh,0Ah,'$'
-op1     db '1. Ingresar calificaciones',0Dh,0Ah,'$'
-op2     db '2. Mostrar estadisticas',0Dh,0Ah,'$'
-op3     db '3. Buscar estudiante',0Dh,0Ah,'$'
-op4     db '4. Ordenar calificaciones',0Dh,0Ah,'$'
-op5     db '5. Salir',0Dh,0Ah,'$'
-elegir  db 0Dh,0Ah,'Seleccione una opcion: $'
-salto   db 0Dh,0Ah,'Ha elegido: $'
-salto2  db 0Dh,0Ah,'Presione una tecla para continuar...',0Dh,0Ah,'$'
-opcion  db ?
-
-
-; Fin del programa
-ret
+;----------------------
+titulo        db 0Dh,0Ah, '|RegistroCE|',0Dh,0Ah,'$'
+op1           db '1. Ingresar calificaciones',0Dh,0Ah,'$'
+op2           db '2. Mostrar estadisticas',0Dh,0Ah,'$'
+op3           db '3. Buscar estudiante',0Dh,0Ah,'$'
+op4           db '4. Ordenar calificaciones',0Dh,0Ah,'$'
+op5           db '5. Salir',0Dh,0Ah,'$'
+elegir        db 0Dh,0Ah,'Seleccione una opcion: $'
+salto         db 0Dh,0Ah,'Ha elegido: $'
+salto2        db 0Dh,0Ah,'Presione una tecla para continuar...',0Dh,0Ah,'$'
+mensajeSalir  db 0Dh,0Ah,'Gracias por usar RegistroCE!',0Dh,0Ah,'$'
+opcion        db ?
