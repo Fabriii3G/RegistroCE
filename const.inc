@@ -1,0 +1,2 @@
+MAX_STUDENTS  equ 15
+REC_SIZE      equ 80
