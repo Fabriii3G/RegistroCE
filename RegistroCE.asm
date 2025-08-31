@@ -44,8 +44,8 @@ LeerOpcion proc
     cmp al, '3'
     je  BuscarPorIndice
     
-        cmp al, '4'
-    je  OrdenarCalificacionesAsc        
+    cmp al, '4'
+    je  OrdenarCalificacionesMenu        
         
 
     cmp al, '5'
@@ -68,7 +68,7 @@ LeerOpcion endp
 ; Opcion 1: Ingresar calificaciones (hasta 15)
 ; - Formato: Nombre Apellido1 Apellido2 Nota
 ; - Nota: [0..100], entero o decimal con hasta 5 decimales
-; - Digitar '9' solo -> regresa al men?
+; - Digitar '9' solo -> regresa al menu
 ;====================================================
 IngresarCalificaciones proc
 IngresarLoop:
@@ -105,7 +105,7 @@ PideLinea:
     mov cl, [si+1]       ; longitud de la línea
     cmp cl, 0
     je  NotaInvalida
-    add si, 2            ; SI -> primer carácter
+    add si, 2            ; SI -> primer caracter
 
     mov bl, 0            ; contador de espacios
 ContarEspacios:
@@ -444,7 +444,7 @@ IngresarCalificaciones endp
 BuscarPorIndice proc
     call Cls
 
-    ; ¿Hay estudiantes?
+    ; Hay estudiantes?
     mov  al, [studentsCount]
     cmp  al, 0
     jne  PreguntaIndice
@@ -458,7 +458,7 @@ PreguntaIndice:
     mov  dx, offset msgPedirIndice
     call PrintString
 
-    ; Leer línea corta con AH=0Ah (máx 3 dígitos)
+    ; Leer linea corta con AH=0Ah (max 3 digitos)
     mov  dx, offset bufferNum
     mov  ah, 0Ah
     int  21h
@@ -547,71 +547,125 @@ BuscarPorIndice endp
 
 
 ;----------------------------------------------------
-; Opcion 4: Ordenar calificaciones ascendente
+;Opcion 4. Ordenar calificaciones 
 ;  - Bubble sort en notas32[] (32-bit)
 ;  - Permuta en paralelo recOfs[]
 ;  - Imprime lista ordenada
 ;  - NO usa CX dentro del inner loop (evita romper CH)
 ;----------------------------------------------------
-OrdenarCalificacionesAsc proc
-    call Cls
-
+OrdenarCalificacionesMenu proc
+    ; --- verificar si hay al menos 2 registros ---
     mov  al, [studentsCount]
     cmp  al, 2
-    jae  TieneDatos
+    jae  ContinuarOrdenamiento
+
+    ; si no hay suficientes, mostrar mensaje y regresar
+    call Cls
     mov  dx, offset msgOrdenNoEnough
     call PrintString
-    mov  ah,1
-    int  21h
     ret
 
-TieneDatos:
-    mov  cl, [studentsCount]   ; CL = n
-    dec  cl                    ; CL = n-1 (pasadas del bubble)
+ContinuarOrdenamiento:
+    call Cls
+    mov  dx, offset msgElegirOrden
+    call PrintString
+    mov  dx, offset msgElegirAsc
+    call PrintString
+    mov  dx, offset msgElegirDes
+    call PrintString
+
+LeerOpcion4:
+    mov ah, 1
+    int 21h
+
+    cmp al, '1'
+    je OrdenarAsc
+    cmp al, '2'
+    je OrdenarDesc
+
+    ; opcion invalida
+    mov dx, offset msgInvalido
+    call PrintString
+    jmp LeerOpcion4   ; vuelve a pedir
+
+OrdenarAsc:
+    mov [ordenFlag], 0
+    call OrdenarCalificacionesBubble
+    ret
+
+OrdenarDesc:
+    mov [ordenFlag], 1
+    call OrdenarCalificacionesBubble
+    ret
+OrdenarCalificacionesMenu endp
+
+
+;----------------------------------------------------
+; Ordenamiento Bubble con flag asc/desc
+;----------------------------------------------------
+OrdenarCalificacionesBubble proc
+    call Cls
+
+    mov  cl, [studentsCount]
+    dec  cl              ; CL = n-1 (pasadas del bubble)
 
 OuterLoop:
-    mov  ch, cl                ; CH = cantidad de comparaciones en esta pasada
-    xor  si, si                ; j = 0
+    mov  ch, cl
+    xor  si, si          ; j = 0
 
 InnerLoop:
-    ; ptr = &notas32[j]
+    ; apuntar a notas32[j]
     mov  ax, si
-    shl  ax, 2                 ; j*4
+    shl  ax, 2
     mov  di, offset notas32
     add  di, ax
 
-    ; nota[j]  -> DX:AX  (lo=ax, hi=dx)
     mov  ax, [di]
     mov  dx, [di+2]
 
-    ; nota[j+1]-> BP:BX  (lo=bx, hi=bp)  (NO usar CX)
     mov  bx, [di+4]
     mov  bp, [di+6]
 
-    ; comparar DX:AX vs BP:BX  (j ? j+1)
+    ; --- Comparacion segun flag ---
+    mov  al, [ordenFlag]
+    cmp  al, 0
+    je   AscendenteCmp
+
+DescendenteCmp:
+    ; DESC: swap si nota[j] < nota[j+1]
     cmp  dx, bp
-    jb   NoSwap                 ; j < j+1  (ok asc)
-    ja   HacerSwap              ; j > j+1  (swap)
+    ja   NoSwap
+    jb   DoSwap
     cmp  ax, bx
-    jbe  NoSwap                 ; j <= j+1
+    jae  NoSwap
+    jmp DoSwap
 
-HacerSwap:
-    ; --- swap notas32[j] <-> notas32[j+1] ---
-    xchg ax, bx                 ; lo
-    xchg dx, bp                 ; hi
-    mov  [di],   ax
-    mov  [di+2], dx
-    mov  [di+4], bx
-    mov  [di+6], bp
+AscendenteCmp:
+    ; ASC: swap si nota[j] > nota[j+1]
+    cmp  dx, bp
+    jb   NoSwap
+    ja   DoSwap
+    cmp  ax, bx
+    jbe  NoSwap
+    jmp DoSwap
 
-    ; --- swap recOfs[j] <-> recOfs[j+1] ---
+DoSwap:
+    ; intercambio notas32[j] <-> notas32[j+1]
+    xchg ax, bx
+    xchg dx, bp
+    mov [di], ax
+    mov [di+2], dx
+    mov [di+4], bx
+    mov [di+6], bp
+
+    ; intercambio recOfs[j] <-> recOfs[j+1]
     mov  ax, si
-    shl  ax, 1                  ; j*2
+    shl  ax, 1
     mov  di, offset recOfs
     add  di, ax
-    mov  ax, [di]               ; recOfs[j]
-    xchg ax, [di+2]             ; con recOfs[j+1]
-    mov  [di], ax
+    mov  ax, [di]
+    xchg ax, [di+2]
+    mov [di], ax
 
 NoSwap:
     inc  si
@@ -621,8 +675,16 @@ NoSwap:
     dec  cl
     jnz  OuterLoop
 
-    ; ----- imprimir ya ordenado -----
+    ; ----- Imprimir resultado -----
+    mov  al, [ordenFlag]
+    cmp  al, 0
+    je   AscPrint
+DescPrint:
+    mov  dx, offset msgOrdenDesc
+    jmp ContinuePrint
+AscPrint:
     mov  dx, offset msgOrdenAsc
+ContinuePrint:
     call PrintString
 
     xor  bx, bx
@@ -631,7 +693,6 @@ PrintLoop:
     cmp  bl, al
     jae  FinPrint
 
-    ; DI = studentsBuf + recOfs[bx]
     mov  ax, bx
     shl  ax, 1
     mov  si, offset recOfs
@@ -642,16 +703,18 @@ PrintLoop:
     call PrintString
 
     inc  bl
-    jmp  PrintLoop
+    jmp PrintLoop
 
 FinPrint:
-    mov  ah,1
-    int  21h
+    mov  dx, offset msgRegresarMenu
+    call PrintString
+
+    mov ah, 7         ; esperar tecla
+    int 21h
+
     call Cls
     ret
-OrdenarCalificacionesAsc endp
-
-
+OrdenarCalificacionesBubble endp
 
 ;----------------------------------------------------
 ; Utilidades
@@ -741,8 +804,14 @@ bufferNum      db 3       ; capacidad maxima (3)
                db 3 dup(0)
 
 ; --- Opcion 4(Ordenar)
+msgElegirOrden db 0Dh,0Ah,'Indique como desea ordenar las calificaciones:',0Dh,0Ah,'$'
+msgElegirAsc   db 0Dh,0Ah,'1. Ascendente',0Dh,0Ah,'$'
+msgElegirDes   db 0Dh,0Ah,'2. Descendente',0Dh,0Ah,'$'
 msgOrdenAsc       db 0Dh,0Ah,'Calificaciones ordenadas (ascendente):',0Dh,0Ah,'$'
+msgOrdenDesc       db 0Dh,0Ah,'Calificaciones ordenadas (descendente):',0Dh,0Ah,'$'
 msgOrdenNoEnough  db 0Dh,0Ah,'Se requieren al menos 2 estudiantes para ordenar.',0Dh,0Ah,'$'
+msgInvalido  db 0Dh,0Ah,'Pulse la tecla 1 o 2',0Dh,0Ah,'$'
+msgRegresarMenu db 0Dh,0Ah,'Pulse cualquier tecla para regresar al menu principal',0Dh,0Ah,'$'
 
 ; Buffer entrada AH=0Ah
 bufferLinea   db 80
@@ -758,4 +827,7 @@ studentsCount db 0
 studentsBuf   db 15*80 dup(0)
 
 opcion        db ? 
+
+;Flag BubbleSort
+ordenFlag db 0   ; 0 = Ascendente, 1 = Descendente
 

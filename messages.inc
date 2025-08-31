@@ -28,6 +28,13 @@ msgNombreInv db 0Dh,0Ah,'Entrada invalida: debe ingresar Nombre y dos Apellidos 
 
 
 ; --- Opcion 4(Ordenar)
+msgElegirOrden db 0Dh,0Ah,'Indique como desea ordenar las calificaciones:',0Dh,0Ah,'$'
+msgElegirAsc   db 0Dh,0Ah,'1. Ascendente',0Dh,0Ah,'$'
+msgElegirDes   db 0Dh,0Ah,'2. Descendente',0Dh,0Ah,'$'
 msgOrdenAsc       db 0Dh,0Ah,'Calificaciones ordenadas (ascendente):',0Dh,0Ah,'$'
+msgOrdenDesc       db 0Dh,0Ah,'Calificaciones ordenadas (descendente):',0Dh,0Ah,'$'
 msgOrdenNoEnough  db 0Dh,0Ah,'Se requieren al menos 2 estudiantes para ordenar.',0Dh,0Ah,'$'
-
+msgInvalido  db 0Dh,0Ah,'Pulse la tecla 1 o 2',0Dh,0Ah,'$'
+msgRegresarMenu db 0Dh,0Ah,'Pulse cualquier tecla para regresar al menu principal',0Dh,0Ah,'$
+;Flag BubbleSort
+ordenFlag db 0   ; 0 = Ascendente, 1 = Descendente
