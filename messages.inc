@@ -18,12 +18,22 @@ msgOK         db 0Dh,0Ah,'Estudiante agregado! Pulse cualquier tecla para contin
 msgLleno      db 0Dh,0Ah,'Capacidad maxima (15 estudiantes) alcanzada.',0Dh,0Ah,'$'
 
 
+; --- Opcion 2 ---
+msgMax db 0Dh,0Ah,'Nota maxima:',0Dh,0Ah,'$'
+msgMin db 0Dh,0Ah,'Nota minima:',0Dh,0Ah,'$'
+msgAprobados  db 13,10,'Cantidad de estudiantes aprobados: $'
+msgReprobados  db 13,10,'Cantidad de estudiantes reprobados: $'
+msgPorcAprob   db 13,10,'Porcentaje aprobados: $'
+msgPorcReprob  db 13,10,'Porcentaje reprobados: $'
+
+
 ; --- Opcion 3 (buscar por ?ndice) ---
 msgPedirIndice db 0Dh,0Ah,'Ingrese el indice del estudiante (1..15): ',0Dh,0Ah,'$'
 msgSinDatos    db 0Dh,0Ah,'No hay estudiantes guardados.',0Dh,0Ah,'$'
 msgNoNumerico  db 0Dh,0Ah,'Entrada invalida: debe ser un numero entero.',0Dh,0Ah,'$'
 msgIndiceInv   db 0Dh,0Ah,'Indice fuera de rango.',0Dh,0Ah,'$'
 msgNombreInv db 0Dh,0Ah,'Entrada invalida: debe ingresar Nombre y dos Apellidos antes de la nota.',0Dh,0Ah,'$'
+
 
 
 

@@ -38,6 +38,9 @@ LeerOpcion proc
     cmp al, '1'
     je  IngresarCalificaciones 
     
+    cmp al, '2'
+    je  MostrarEstadisticas 
+    
     cmp al, '3'
     je  BuscarPorIndice
     

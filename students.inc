@@ -369,6 +369,199 @@ RegresarMenu:
     ret
 IngresarCalificaciones endp  
 
+
+;----------------------------------------------------
+; Opcion 2: Mostrar estadísticas
+;   - Nota más alta y más baja
+;   - Cantidad de estudiantes aprobados (nota >= 70)
+;   - Imprime la línea completa del estudiante
+;----------------------------------------------------
+MostrarEstadisticas proc
+    call Cls
+
+    ; ¿Hay estudiantes?
+    mov  al, [studentsCount]
+    cmp  al, 0
+    jne  TieneDatosStats
+    mov  dx, offset msgSinDatos
+    call PrintString
+    mov ah,1
+    int  21h
+    ret
+
+TieneDatosStats:
+    ; Inicializar min y max con la primera nota (notas32[0])
+    xor  bx, bx
+    mov  si, offset notas32
+    mov  ax, [si]           ; low word
+    mov  dx, [si+2]         ; high word (notaEscalada)
+    mov  word ptr maxLo, ax
+    mov  word ptr maxHi, dx
+    mov  word ptr minLo, ax
+    mov  word ptr minHi, dx
+    mov  word ptr idxMax, 0
+    mov  word ptr idxMin, 0
+
+    ; Inicializar contador de aprobados/reprobados
+    mov  word ptr reprobados, 0
+    mov  word ptr aprobados, 0
+
+    ; ---- Revisar primera nota ----
+    mov  ax, [si]
+    mov  dx, [si+2]
+    call CheckAprobado
+
+    ; ===== Preparar contador: CX = studentsCount - 1 =====
+    xor  cx, cx             ; limpiar CH:CL
+    mov  cl, [studentsCount]
+    dec  cx
+    jz   UnicoEstudiante    ; si solo 1 estudiante, saltar el bucle
+    mov  bx, 1              ; j = 1
+
+LoopStats:
+    ; nota[j] -> DX:AX
+    mov  ax, bx
+    shl  ax, 2              ; j*4
+    mov  si, offset notas32
+    add  si, ax
+    mov  ax, [si]           ; parte baja
+    mov  dx, [si+2]         ; parte alta (notaEscalada)
+
+    ; comparar con max (DX:AX vs maxHi:maxLo)
+    cmp  dx, [maxHi]
+    ja   NewMax
+    jb   CheckMin
+    cmp  ax, [maxLo]
+    jbe  CheckMin
+NewMax:
+    mov  [maxLo], ax
+    mov  [maxHi], dx
+    mov  [idxMax], bx
+
+CheckMin:
+    ; comparar con min (DX:AX vs minHi:minLo)
+    cmp  dx, [minHi]
+    jb   NewMin
+    ja   NextJ
+    cmp  ax, [minLo]
+    jae  NextJ
+NewMin:
+    mov  [minLo], ax
+    mov  [minHi], dx
+    mov  [idxMin], bx
+
+NextJ:
+    ; verificar si es aprobado (notaEscalada)
+    call CheckAprobado
+
+    inc  bx
+    loop LoopStats
+
+UnicoEstudiante:
+    ; ---- Imprimir resultados ----
+    mov  dx, offset msgMax
+    call PrintString
+    mov  ax, [idxMax]
+    shl  ax, 1
+    mov  si, offset recOfs
+    add  si, ax
+    mov  di, [si]
+    mov  dx, di
+    call PrintString
+
+    mov  dx, offset msgMin
+    call PrintString
+    mov  ax, [idxMin]
+    shl  ax, 1
+    mov  si, offset recOfs
+    add  si, ax
+    mov  di, [si]
+    mov  dx, di
+    call PrintString
+
+    ; ---- Imprimir cantidad de aprobados ----
+    mov  dx, offset msgAprobados
+    call PrintString
+    mov  ax, [aprobados]
+    call PrintNumber
+
+    ; ---- Porcentaje aprobados ----
+    mov  ax, [aprobados]
+    call CalcPorcentaje
+    mov  dx, offset msgPorcAprob
+    call PrintString
+    call PrintNumber
+
+    ; ---- Cantidad de reprobados ----
+    mov  dx, offset msgReprobados
+    call PrintString
+    mov  ax, [reprobados]
+    call PrintNumber
+
+    ; ---- Porcentaje reprobados ----
+    mov  ax, [reprobados]
+    call CalcPorcentaje
+    mov  dx, offset msgPorcReprob
+    call PrintString
+    call PrintNumber
+
+    ; Pausa
+    mov  ah,1
+    int  21h
+    ret
+MostrarEstadisticas endp
+
+;----------------------------------------------------
+; Subrutina: Verifica si DX:AX >= 70 escalado
+; Entrada: DX:AX = notaEscalada (32-bit)
+; Salida: incrementa "aprobados" o "reprobados"
+;----------------------------------------------------
+;----------------------------------------------------
+CheckAprobado proc
+    cmp dx, 006Ah
+    ja  EsAprobado          ; DX > 0x006A  → seguro >= 7,000,000
+    jb  NoAprobado          ; DX < 0x006A  → seguro <  7,000,000
+    cmp ax, 0CFC0h          ; DX = 0x006A  → comparar parte baja
+    jae EsAprobado
+    jmp NoAprobado
+
+EsAprobado:
+    inc word ptr aprobados
+    ret
+
+NoAprobado:
+    inc word ptr reprobados
+    ret
+CheckAprobado endp
+
+;----------------------------------------------------
+; Calcula porcentaje = (valor * 100) / studentsCount
+; Entrada: AX = valor
+; Usa:     studentsCount (db)
+; Salida:  AX = porcentaje (0–100)
+;----------------------------------------------------
+CalcPorcentaje proc
+    mov bl, [studentsCount]  ; BL = total (8 bits)
+    mov bh, 0                ; Extender a 16 bits → BX = 0..BL
+    mov cx, 100
+    mul cx                   ; DX:AX = valor * 100
+    div bx                   ; AX = (valor*100)/total
+    ret
+CalcPorcentaje endp
+
+
+; ---- Variables auxiliares ----
+maxLo      dw 0
+maxHi      dw 0
+minLo      dw 0
+minHi      dw 0
+idxMax     dw 0
+idxMin     dw 0
+reprobados dw 0
+aprobados  dw 0
+
+
+
 ;----------------------------------------------------
 ; Opcion 3: Buscar estudiante por posicion (indice)
 ;   - Pide un numero (1..studentsCount)
@@ -584,4 +777,3 @@ FinPrint:
     call Cls
     ret
 OrdenarCalificacionesAsc endp
-
