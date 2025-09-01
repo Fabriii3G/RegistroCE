@@ -589,12 +589,12 @@ LeerOpcion4:
     jmp LeerOpcion4   ; vuelve a pedir
 
 OrdenarAsc:
-    mov [ordenFlag], 0
+    mov [ordenFlag], 1
     call OrdenarCalificacionesBubble
     ret
 
 OrdenarDesc:
-    mov [ordenFlag], 1
+    mov [ordenFlag], 2
     call OrdenarCalificacionesBubble
     ret
 OrdenarCalificacionesMenu endp
@@ -628,7 +628,7 @@ InnerLoop:
 
     ; --- Comparacion segun flag ---
     mov  al, [ordenFlag]
-    cmp  al, 0
+    cmp  al, 1
     je   AscendenteCmp
 
 DescendenteCmp:
@@ -677,7 +677,7 @@ NoSwap:
 
     ; ----- Imprimir resultado -----
     mov  al, [ordenFlag]
-    cmp  al, 0
+    cmp  al, 1
     je   AscPrint
 DescPrint:
     mov  dx, offset msgOrdenDesc
@@ -713,7 +713,7 @@ FinPrint:
     int 21h
 
     call Cls
-    ret
+    jmp start
 OrdenarCalificacionesBubble endp
 
 ;----------------------------------------------------
@@ -829,5 +829,5 @@ studentsBuf   db 15*80 dup(0)
 opcion        db ? 
 
 ;Flag BubbleSort
-ordenFlag db 0   ; 0 = Ascendente, 1 = Descendente
+ordenFlag db 1   ; 1 = Ascendente, 2 = Descendente
 
