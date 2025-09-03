@@ -17,7 +17,7 @@ PrintNumber proc
 
 PN_Loop:
     xor dx, dx
-    div bx            ; AX / 10 -> AX=cociente, DX=resto
+    div bx            
     push dx           ; guardar dígito en la pila
     inc cx
     cmp ax, 0
@@ -58,5 +58,3 @@ CRLF proc
     int 21h
     ret
 CRLF endp
-
-; (opcional) PrintNumDec aquí

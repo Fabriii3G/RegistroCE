@@ -1,9 +1,8 @@
-;----------------------------------------------------
+ ;----------------------------------------------------
 ;Opcion 4. Ordenar calificaciones 
 ;  - Bubble sort en notas32[] (32-bit)
 ;  - Permuta en paralelo recOfs[]
 ;  - Imprime lista ordenada
-;  - NO usa CX dentro del inner loop (evita romper CH)
 ;----------------------------------------------------
 OrdenarCalificacionesMenu proc
     ; --- verificar si hay al menos 2 registros ---
@@ -165,7 +164,7 @@ FinPrint:
     mov  dx, offset msgRegresarMenu
     call PrintString
 
-    mov ah, 7         ; esperar tecla
+    mov ah, 7         ; esperar input
     int 21h
 
     call Cls

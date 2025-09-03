@@ -1,9 +1,9 @@
-;====================================================
+;----------------------------------------------------
 ; Opcion 1: Ingresar calificaciones (hasta 15)
 ; - Formato: Nombre Apellido1 Apellido2 Nota
 ; - Nota: [0..100], entero o decimal con hasta 5 decimales
-; - Digitar '9' solo -> regresa al men?
-;====================================================
+; - Digitar '9' solo -> regresa al menu
+;----------------------------------------------------
 IngresarCalificaciones proc
 IngresarLoop:
     call Cls
@@ -20,12 +20,12 @@ PideLinea:
     mov dx, offset msgIngresar
     call PrintString
 
-    ; Leer linea (AH=0Ah)
+    ; Lee linea (AH=0Ah)
     mov dx, offset bufferLinea
     mov ah, 0Ah
     int 21h
 
-    ; '9' + Enter -> regresar
+    ; '9' + Enter -> regresa
     mov si, offset bufferLinea
     mov bl, [si+1]
     cmp bl, 1
@@ -34,12 +34,12 @@ PideLinea:
     cmp al, '9'
     je  RegresarMenu
 
-    ; --- Verificar que haya al menos 3 palabras (Nombre + 2 apellidos) ---
+    ; Verificar 3 palabras (Nombre + 2 apellidos)
     mov si, offset bufferLinea
-    mov cl, [si+1]       ; longitud de la línea
+    mov cl, [si+1]       ; longitud linea
     cmp cl, 0
     je  NotaInvalida
-    add si, 2            ; SI -> primer carácter
+    add si, 2           
 
     mov bl, 0            ; contador de espacios
 ContarEspacios:
@@ -55,8 +55,8 @@ NoEspacio:
     jmp ContarEspacios
 
 VerificarEspacios:
-    cmp bl, 3            ; al menos 3 espacios => 4 palabras
-    jb  NombreInvalido   ; si < 2 espacios, error
+    cmp bl, 3            
+    jb  NombreInvalido   ; Intento de validacion
     ; sigue flujo normal
 
 
@@ -92,14 +92,14 @@ FindSpaceBack:
     dec bx
     jmp FindSpaceBack
 FoundSpace:
-    inc di                 ; di -> inicio de la nota
+    inc di                 ; di / inicio de la nota
     jmp TocaValidar
 NoSpaceFound:
     mov di, si
     add di, 2
 
 TocaValidar:
-    ; --- Inicializaciones para validacion y rango ---
+    ; validacion y rango 
     mov bp, 0                  ; 0 = antes de '.', 1 = despues
     mov byte ptr decCount, 0   ; # de decimales
     mov byte ptr fracNZ, 0     ; hubo decimal no-cero
@@ -112,7 +112,7 @@ ValLoop:
     mov al, [si+1]
     xor ah, ah
     add si, 2
-    add si, ax                 ; si -> fin+1
+    add si, ax                 
     cmp di, si
     jae FinVal
 
@@ -124,28 +124,28 @@ ValLoop:
     cmp al, '9'
     ja  CheckDot
 
-    ; --- Es digito ---
+    ; Si es digito
     cmp bp, 0
     jne AfterDotDigit
 
-    ; Antes del punto: acumular parte entera y chequear >100
+    ; Acumular parte entera y revisar 100>
     mov bl, al
     sub bl, '0'                 ; BL = valor [0..9]
     mov ax, [intVal]
     mov bx, 10
-    mul bx                      ; DX:AX = intVal*10
-    add ax, bx                  ; OJO: BX ahora no es 10; debemos restaurar BL
-    ; Correccion: rehacer suma con BL
-    ; (ajuste seguro, usa temporales peque?os)
+    mul bx                      
+    add ax, bx                  
+
+
 AfterMulFix:
     ; Rehacer la suma correctamente:
     mov ax, [intVal]
     mov bx, 10
-    mul bx                      ; DX:AX = intVal*10
+    mul bx                      
     xor bh, bh
     mov bl, [di]
     sub bl, '0'
-    add ax, bx                  ; AX = intVal*10 + d?gito
+    add ax, bx                  
     mov [intVal], ax
     cmp ax, 100
     ja  NotaFueraRango
@@ -156,10 +156,9 @@ AfterDotDigit:
     cmp byte ptr decCount, 5
     ja  NotaInvalida
 
-    ; fracVal = fracVal*10 + (al - '0')
     mov bx, 10
     mov ax, [fracVal]
-    mul bx                ; DX:AX = fracVal*10
+    mul bx               
     xor bh, bh
     mov bl, [di]
     sub bl, '0'
@@ -195,7 +194,7 @@ FinVal:
     cmp ax, 100
     jb  RangoOK                ; <100 siempre ok
     ja  NotaFueraRango         ; >100 no
-    ; ==100: solo v?lido si no hay decimales no-cero
+    ; si es 100 solo decimales 0
     cmp bp, 0
     je  RangoOK                ; 100 (entero)
     cmp byte ptr decCount, 0
@@ -204,13 +203,13 @@ FinVal:
     jne NotaFueraRango         ; 100.x con x!=0    
     
 RangoOK:
-    ; ===== 1) Construir notaEscalada = intVal*100000 + fracVal * 10^(5 - decCount) =====
-    ; 1.a) intVal * 100000  (usando *10000 y luego *10)
+    ; 1) Construir notaEscalada 
+    ; 1.a) intVal * 100000 
     mov ax, [intVal]
     mov bx, 10000
-    mul bx              ; DX:AX = intVal * 10000  (32-bit)
+    mul bx              ; (32-bit)
 
-    ; *10 = (<<3) + (<<1)
+    
     push dx
     push ax
     pop ax
@@ -224,7 +223,6 @@ RangoOK:
     push dx             ; guardar (<<1) hi
     push ax             ; guardar (<<1) lo
 
-    ; volver al original en SI:DI y hacer <<3
     mov ax, si
     mov dx, di
     shl ax, 1
@@ -232,7 +230,7 @@ RangoOK:
     shl ax, 1
     rcl dx, 1
     shl ax, 1
-    rcl dx, 1          ; (<<3) en DX:AX
+    rcl dx, 1          
 
     ; sumar (<<1)
     pop si              ; (<<1) lo
@@ -242,15 +240,15 @@ RangoOK:
     push dx             ; guarda intPartHi
     push ax             ; guarda intPartLo
 
-    ; 1.b) fracVal * 10^(5 - decCount)  --- versión con LOOP ---
+    ; 1.b) LOOP 
     xor  dx, dx
-    mov  ax, [fracVal]          ; DX:AX = fracVal
+    mov  ax, [fracVal]          
     xor  cx, cx
     mov  cl, 5
     sub  cl, [decCount]         ; CL = 5 - decCount
     jz   NoFracScale
+
 FracScaleLoop:
-    ; (DX:AX) *= 10  = (<<3)+(<<1)
     ; Guardar original en SI:DI
     mov  si, ax
     mov  di, dx
@@ -259,9 +257,9 @@ FracScaleLoop:
     shl  ax, 1
     rcl  dx, 1
     push dx
-    push ax                     ; pila: (<<1)
+    push ax                     ; pila
 
-    ; volver al original y hacer <<3
+    ; volver al original
     mov  ax, si
     mov  dx, di
     shl  ax, 1
@@ -269,65 +267,61 @@ FracScaleLoop:
     shl  ax, 1
     rcl  dx, 1
     shl  ax, 1
-    rcl  dx, 1                  ; (<<3) en DX:AX
+    rcl  dx, 1                  
 
     ; sumar (<<1)
-    pop  si                     ; (<<1) lo
-    pop  di                     ; (<<1) hi
+    pop  si                     
+    pop  di                    
     add  ax, si
     adc  dx, di
 
     loop FracScaleLoop
 NoFracScale:
-    ; DX:AX = fracScaled
-    ; 1.c) Sumar ambas partes ? notaEscalada
+    ; 1.c) Sumar ambas partes / notaEscalada
     pop si              ; intPartLo
     pop di              ; intPartHi
     add ax, si
-    adc dx, di          ; DX:AX = notaEscalada (32-bit)
+    adc dx, di          ; notaEscalada (32-bit)
 
-    ; ===== 2) Guardar notaEscalada en notas32[studentsCount] =====
+    ; Guardar notaEscalada en notas32[studentsCount]
     mov bx, 0
     mov bl, [studentsCount]
-    shl bx, 2                  ; *4 bytes (dd)
+    shl bx, 2                  
     mov di, offset notas32
     add di, bx
     mov [di], ax               ; low word
     mov [di+2], dx             ; high word
 
-    ; ===== 3) Guardar línea completa y metadatos =====
-    ; 3.a) Calcular DI = &studentsBuf + idx*80
+    ; Guardar línea completa 
     mov al, [studentsCount]
     xor ah, ah                 ; AX = idx
-    mov bx, ax                 ; BX = idx
+    mov bx, ax                 
     mov ax, bx
     shl ax, 4                  ; idx*16
     mov dx, bx
     shl dx, 6                  ; idx*64
-    add ax, dx                 ; AX = idx*80
+    add ax, dx                 
     mov di, offset studentsBuf
     add di, ax                 ; DI = destino del registro
 
     ; 3.b) Guardar recOfs[idx] = DI
     mov bx, 0
     mov bl, [studentsCount]
-    shl bx, 1                  ; *2 bytes (dw)
+    shl bx, 1                  
     mov si, offset recOfs
     add si, bx
-    mov [si], di               ; offset de inicio del registro
+    mov [si], di               
 
-    ; 3.c) Copiar la línea desde bufferLinea
+    ; Copiar la líneas
     mov si, offset bufferLinea
     mov cl, [si+1]             ; longitud real
     xor ch, ch
-    add si, 2                  ; SI -> primer carácter
-    cld                 ; por si acaso, copiar hacia adelante
+    add si, 2                  ; primer carácter
+    cld                
     mov  ax, ds
-    mov  es, ax         ; <— garantizar que ES=DS aquí también
-    ; (ahora sí el rep movsb copia dentro del segmento de datos)
+    mov  es, ax         
     rep movsb
 
-    ; 3.d) Terminar con CR, LF, '$'
     mov byte ptr [di], 0Dh
     inc di
     mov byte ptr [di], 0Ah
@@ -335,12 +329,12 @@ NoFracScale:
     mov byte ptr [di], '$'
     inc di
 
-    ; 3.e) Incrementar contador
+    ; Incrementar contador
     mov al, [studentsCount]
     inc al
     mov [studentsCount], al
 
-    ; 3.f) Mensaje y pausa
+    ; Mensaje y pausa
     mov dx, offset msgOK
     call PrintString
     mov ah,1

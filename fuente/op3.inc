@@ -2,7 +2,6 @@
 ; Opcion 3: Buscar estudiante por posicion (indice)
 ;   - Pide un numero (1..studentsCount)
 ;   - Imprime el registro si existe
-;   - Usa recOfs[(idx-1)] para respetar el orden actual
 ;----------------------------------------------------
 BuscarPorIndice proc
     call Cls
@@ -21,7 +20,7 @@ PreguntaIndice:
     mov  dx, offset msgPedirIndice
     call PrintString
 
-    ; Leer línea corta con AH=0Ah (máx 3 dígitos)
+    ; Leer línea 
     mov  dx, offset bufferNum
     mov  ah, 0Ah
     int  21h
@@ -39,10 +38,10 @@ PreguntaIndice:
     cmp  bl, 0
     je   IndiceInvalido
 
-    ; Parsear número decimal en AX (versión sin LOOP)
-    xor  ax, ax                  ; AX = valor
+    ; Parsear número decimal 
+    xor  ax, ax                  
     mov  di, si
-    add  di, 2                   ; DI -> primer carácter
+    add  di, 2                   
 ParseLoop:
     cmp  bl, 0
     je   FinParse
@@ -53,11 +52,11 @@ ParseLoop:
     cmp  dl, '9'
     ja   IndiceNoNumerico
 
-    ; ax = ax*10 + (dl - '0')
+    
     mov  dx, ax
-    shl  ax, 1                   ; *2
-    shl  dx, 3                   ; *8
-    add  ax, dx                  ; *10
+    shl  ax, 1                   
+    shl  dx, 3                   
+    add  ax, dx                  
     mov  cl, [di]
     sub  cl, '0'
     xor  ch, ch
@@ -68,7 +67,7 @@ ParseLoop:
     jmp  ParseLoop
 FinParse:
 
-    ; Rango: 1..studentsCount
+    ; Rango: 1t
     cmp  ax, 1
     jb   IndiceFueraRango
     mov  bl, [studentsCount]
@@ -76,14 +75,14 @@ FinParse:
     cmp  ax, bx
     ja   IndiceFueraRango
 
-    ; Usar recOfs[(idx-1)] para ubicar el registro actual (ordenado)
+    ; ubicar el registro actual
     dec  ax                        ; idx-1
-    shl  ax, 1                     ; (idx-1)*2 (cada recOfs es dw)
+    shl  ax, 1                     
     mov  si, offset recOfs
     add  si, ax
     mov  di, word ptr [si]         ; DI = offset del registro en studentsBuf
 
-    ; Imprimir el registro (termina en '$')
+    ; Imprimir el registro 
     mov  dx, di
     call PrintString
 

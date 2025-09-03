@@ -22,7 +22,7 @@ TieneDatosStats:
     xor  bx, bx
     mov  si, offset notas32
     mov  ax, [si]           ; low word
-    mov  dx, [si+2]         ; high word (notaEscalada)
+    mov  dx, [si+2]         
     mov  word ptr maxLo, ax
     mov  word ptr maxHi, dx
     mov  word ptr minLo, ax
@@ -34,13 +34,13 @@ TieneDatosStats:
     mov  word ptr reprobados, 0
     mov  word ptr aprobados, 0
 
-    ; ---- Revisar primera nota ----
+    ; Revisar primera nota
     mov  ax, [si]
     mov  dx, [si+2]
     call CheckAprobado
 
-    ; ===== Preparar contador: CX = studentsCount - 1 =====
-    xor  cx, cx             ; limpiar CH:CL
+    ; Contador: CX 
+    xor  cx, cx             
     mov  cl, [studentsCount]
     dec  cx
     jz   UnicoEstudiante    ; si solo 1 estudiante, saltar el bucle
@@ -49,13 +49,13 @@ TieneDatosStats:
 LoopStats:
     ; nota[j] -> DX:AX
     mov  ax, bx
-    shl  ax, 2              ; j*4
+    shl  ax, 2              
     mov  si, offset notas32
     add  si, ax
     mov  ax, [si]           ; parte baja
     mov  dx, [si+2]         ; parte alta (notaEscalada)
 
-    ; comparar con max (DX:AX vs maxHi:maxLo)
+    ; comparar con max
     cmp  dx, [maxHi]
     ja   NewMax
     jb   CheckMin
@@ -67,7 +67,7 @@ NewMax:
     mov  [idxMax], bx
 
 CheckMin:
-    ; comparar con min (DX:AX vs minHi:minLo)
+    ; comparar con min
     cmp  dx, [minHi]
     jb   NewMin
     ja   NextJ
@@ -86,16 +86,16 @@ NextJ:
     loop LoopStats
 
 UnicoEstudiante:
-    ; ---- Promedio general ----
+    ; Promedio 
     call CRLF
     mov  dx, offset msgProm     ; "Promedio general: "
     call PrintString
     call MostrarPromedioGeneral ; imprime XX.YYYYY
 
-    ; --- Línea en blanco después del promedio ---
+    ; Línea en blanco
     call CRLF
 
-    ; ---- Imprimir resultados ----
+    ; Imprimir resultados 
     mov  dx, offset msgMax
     call PrintString
     mov  ax, [idxMax]
@@ -116,47 +116,46 @@ UnicoEstudiante:
     mov  dx, di
     call PrintString
 
-    ; ---- Imprimir cantidad de aprobados ----
+    ; Imprimir cantidad de aprobados
     mov  dx, offset msgAprobados
     call PrintString
     mov  ax, [aprobados]
     call PrintNumber
 
-    ; poner un espacio y luego la etiqueta de porcentaje (saltando CRLF inicial)
+    ; etiqueta de porcentaje (saltando CRLF inicial)
     mov  ah, 02h
     mov  dl, ' '
     int  21h
 
     mov  dx, offset msgPorcAprob
-    add  dx, 2                 ; salto los 0Dh,0Ah iniciales para que quede en la misma línea
+    add  dx, 2                 
     call PrintString
     mov  ax, [aprobados]      ; valor
-    call CalcPorcentaje       ; AX = % aprobados
+    call CalcPorcentaje      
     call PrintNumber
     ; imprimir '%' al lado del número
     mov  ah, 02h
     mov  dl, '%'
     int  21h
 
-    ; ---- Línea en blanco separadora ----
+    ; Línea en blanco
     call CRLF
 
-    ; ---- Imprimir cantidad de reprobados ----
+    ; Imprimir cantidad de reprobados 
     mov  dx, offset msgReprobados
     call PrintString
     mov  ax, [reprobados]
     call PrintNumber
 
-    ; poner un espacio y luego la etiqueta de porcentaje (saltando CRLF inicial)
     mov  ah, 02h
     mov  dl, ' '
     int  21h
 
     mov  dx, offset msgPorcReprob
-    add  dx, 2                 ; salto los 0Dh,0Ah iniciales
+    add  dx, 2                 ; salto los 0Dh,
     call PrintString
     mov  ax, [reprobados]     ; valor
-    call CalcPorcentaje       ; AX = % reprobados
+    call CalcPorcentaje       ; % reprobados
     call PrintNumber
     ; imprimir '%' al lado del número
     mov  ah, 02h
@@ -170,16 +169,16 @@ UnicoEstudiante:
 MostrarEstadisticas endp
 
 ;----------------------------------------------------
-; Subrutina: Verifica si DX:AX >= 70 escalado
+; Subrutina: Verifica si >= 70 escalado
 ; Entrada: DX:AX = notaEscalada (32-bit)
 ; Salida: incrementa "aprobados" o "reprobados"
 ;----------------------------------------------------
 ;----------------------------------------------------
 CheckAprobado proc
     cmp dx, 006Ah
-    ja  EsAprobado          ; DX > 0x006A  → seguro >= 7,000,000
-    jb  NoAprobado          ; DX < 0x006A  → seguro <  7,000,000
-    cmp ax, 0CFC0h          ; DX = 0x006A  → comparar parte baja
+    ja  EsAprobado          ;  seguro >= 7,000,000
+    jb  NoAprobado          ;  seguro <  7,000,000
+    cmp ax, 0CFC0h          ;  comparar parte baja
     jae EsAprobado
     jmp NoAprobado
 
@@ -204,8 +203,8 @@ CalcPorcentaje proc
     je PorcentajeCero         ; Si no hay estudiantes, porcentaje = 0
     mov bh, 0                 ; BX = studentsCount (16 bits)
     mov cx, 100
-    xor dx, dx                ; Limpia DX antes de mul
-    mul cx                    ; DX:AX = valor * 100
+    xor dx, dx               
+    mul cx                   
     div bx                    ; AX = (valor * 100) / studentsCount
     ret
 PorcentajeCero:
@@ -222,7 +221,7 @@ CalcPorcentaje endp
 ;   (sin perder precisión del escalado)
 ;----------------------------------------------------
 MostrarPromedioGeneral proc
-    ; Si no hay estudiantes, muestra "0.00" por seguridad
+    ; Si no hay estudiantes, muestra "0.00"
     mov  al, [studentsCount]
     cmp  al, 0
     jne  MP_Continuar
@@ -240,7 +239,7 @@ MP_Continuar:
     mov  word ptr [sumLo], 0
     mov  word ptr [sumHi], 0
 
-    ; loop j=0..studentsCount-1
+    ; loop j=0
     xor  bx, bx                      ; j = 0
     mov  cl, [studentsCount]
     xor  ch, ch
@@ -248,11 +247,11 @@ MP_Continuar:
 
 MP_LoopSum:
     mov  ax, bx
-    shl  ax, 2                       ; j*4 (dd)
+    shl  ax, 2                       
     mov  si, offset notas32
     add  si, ax
 
-    ; sum += notas32[j]  (sumLo/sumHi += [si]:[si+2])
+    ; sum += notas32[j]
     mov  ax, [si]                    ; low
     add  [sumLo], ax
     mov  ax, [si+2]                  ; high
@@ -262,43 +261,38 @@ MP_LoopSum:
     loop MP_LoopSum
 
 MP_ListoSum:
-    ; avgScaled (32-bit) = sum (32-bit) / count (16-bit)
     mov  bl, [studentsCount]         ; divisor (<=15)
     xor  bh, bh
-    mov  ax, [sumHi]                 ; paso 1: dividir la parte alta
+    mov  ax, [sumHi]                 ; dividir la parte alta
     xor  dx, dx
-    div  bx                          ; AX = q1 (alto), DX = r1
+    div  bx                          
     mov  [tmpHi], ax                 ; guardar q1
-    mov  ax, [sumLo]                 ; paso 2: dividir r1:lo
-    div  bx                          ; AX = q0 (bajo), DX = r0
-    mov  [tmpLo], ax                 ; avgScaled = tmpHi:tmpLo (32-bit)
+    mov  ax, [sumLo]                 
+    div  bx                          
+    mov  [tmpLo], ax                 
 
-    ; Queremos mostrar con 2 decimales.
-    ; Truco: (avgScaled * 100)/100000  == avgScaled/1000
     ; Redondeo: sumamos 500 antes de dividir entre 1000.
     mov  ax, [tmpLo]
-    add  ax, 500                     ; +500 para redondeo en /1000
+    add  ax, 500                     
     mov  [tmpLo], ax
     mov  ax, [tmpHi]
     adc  ax, 0
     mov  [tmpHi], ax
 
-    ; q = (tmpHi:tmpLo) / 1000   -> q = valor * 100 (XXYY, donde XX=entero, YY=decimales)
     mov  ax, [tmpHi]
     xor  dx, dx
     mov  bx, 1000
-    div  bx                          ; AX=q1', DX=r1'
+    div  bx                          
     mov  [tmpHi], ax
     mov  ax, [tmpLo]
-    div  bx                          ; AX=q0', DX=r0'
-    mov  [tmpLo], ax                 ; q (32-bit) = tmpHi:tmpLo
+    div  bx                          
+    mov  [tmpLo], ax                
 
-    ; Como el promedio está entre 0..100, q <= 10000 -> la parte alta es 0
-    ; entero = q / 100 ; dec = q % 100
+    ;verificar rango del promedio (no sirve)
     mov  ax, [tmpLo]
     xor  dx, dx
     mov  bx, 100
-    div  bx                          ; AX = entero, DX = dec (0..99)
+    div  bx                          
 
     ; imprimir entero
     push dx                          ; guardar dec
@@ -309,7 +303,7 @@ MP_ListoSum:
     mov  dl, '.'
     int  21h
 
-    ; recuperar decimales en AX y mostrar 2 dígitos
+    ; recuperar decimales y mostrar 2 dígitos
     pop  ax
     call Print2Digits
 
@@ -324,21 +318,21 @@ MostrarPromedioGeneral endp
 Print2Digits proc
     push ax
     push bx
-    ; dividir AX entre 10 -> AX = decenas, DX = unidades
+   
     mov  bx, 10
     xor  dx, dx
-    div  bx             ; AX = tens (0..9), DX = units (0..9)
+    div  bx             
 
-    push dx             ; guardar unidades (DX) en la pila, porque INT 21h puede clobber DX
+    push dx             ; guardar unidades (DX) en la pila
 
-    ; imprimir decenas (AL)
+    ; imprimir decenas 
     mov  dl, al
     add  dl, '0'
     mov  ah, 02h
     int  21h
 
     ; recuperar unidades en DX y convertir a carácter
-    pop  dx              ; DX = unidades
+    pop  dx             
     add  dl, '0'
     mov  ah, 02h
     int  21h
