@@ -1,0 +1,101 @@
+; ---------------------------------------------------------
+; main.asm 16-bit .EXE (MASM/TASM)
+; ---------------------------------------------------------
+
+.MODEL small
+.STACK 100h
+
+; Constantes / EQU que puedan usar datos o codigo
+INCLUDE const.inc
+
+.DATA
+INCLUDE messages.inc     ; cadenas (terminadas en '$' para ah=09h)
+INCLUDE data.inc         ; variables (ej. 'opcion', contadores, etc.)
+
+.CODE
+; Procedimientos auxiliares (impresion, CLS, etc.)
+INCLUDE ui.inc
+; Procedimientos del proyecto (ingresar, buscar, ordenar, etc.)
+INCLUDE students.inc
+
+
+; --------- Punto de entrada ---------
+main PROC
+mov ax, @data
+mov ds, ax
+mov  es, ax
+
+call Cls
+
+MainLoop:
+call Cls
+call MostrarMenu
+call LeerOpcion
+jmp  MainLoop         ; NO volver a "main" (evita reinit DS)
+main ENDP
+
+; ---------- UI / Menú ----------
+MostrarMenu PROC
+mov dx, offset titulo
+call PrintString
+mov dx, offset op1
+call PrintString
+mov dx, offset op2
+call PrintString
+mov dx, offset op3
+call PrintString
+mov dx, offset op4
+call PrintString
+mov dx, offset op5
+call PrintString
+mov dx, offset elegir
+call PrintString
+ret
+MostrarMenu ENDP
+
+; ---------- Lógica de opciones ----------
+LeerOpcion PROC
+mov ah, 01h
+int 21h
+mov opcion, al
+
+cmp al, '1'
+je  IngresarCalificaciones
+
+cmp al, '2'
+je  MostrarEstadisticas
+
+cmp al, '3'
+je  BuscarPorIndice
+
+cmp al, '4'
+je  OrdenarCalificacionesMenu
+
+cmp al, '5'
+je  Salir
+
+; Mensaje de opción inválida
+mov dx, offset salto
+call PrintString
+mov dl, opcion
+mov ah, 02h
+int 21h
+mov dx, offset salto2
+call PrintString
+ret
+LeerOpcion ENDP
+
+; ---------- Salir limpio a DOS ----------
+Salir PROC
+mov dx, offset mensajeSalir
+call PrintString
+mov ax, 4C00h
+int 21h
+Salir ENDP
+
+END main
+
+
+
+
+; [SOURCE]: C:\Users\Usuario\Desktop\TEC II 2025\Paradigmas\Tarea1\RegistroCE\fuente\main.asm

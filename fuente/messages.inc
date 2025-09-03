@@ -14,7 +14,7 @@ msgIngresar   db 0Dh,0Ah,'Por favor ingrese su estudiante (Nombre Apellido1 Apel
               db 'O digite 9 para salir al menu principal',0Dh,0Ah,'$'
 msgNotaInv    db 0Dh,0Ah,'Nota invalida: formato incorrecto (use entero o decimal con hasta 5 decimales).',0Dh,0Ah,'$'
 msgRangoInv   db 0Dh,0Ah,'Nota fuera de rango: debe estar entre 0 y 100 (100.00000 permitido).',0Dh,0Ah,'$'
-msgOK         db 0Dh,0Ah,'Estudiante agregado! Pulse cualquier tecla para continuar.',0Dh,0Ah,'$'
+msgOK         db 0Dh,0Ah,'Estudiante agregado! Presione cualquier tecla para continuar.',0Dh,0Ah,'$'
 msgLleno      db 0Dh,0Ah,'Capacidad maxima (15 estudiantes) alcanzada.',0Dh,0Ah,'$'
 
 
@@ -44,7 +44,7 @@ msgElegirDes   db 0Dh,0Ah,'2. Descendente',0Dh,0Ah,'$'
 msgOrdenAsc       db 0Dh,0Ah,'Calificaciones ordenadas (ascendente):',0Dh,0Ah,'$'
 msgOrdenDesc       db 0Dh,0Ah,'Calificaciones ordenadas (descendente):',0Dh,0Ah,'$'
 msgOrdenNoEnough  db 0Dh,0Ah,'Se requieren al menos 2 estudiantes para ordenar.',0Dh,0Ah,'$'
-msgInvalido  db 0Dh,0Ah,'Pulse la tecla 1 o 2',0Dh,0Ah,'$'
-msgRegresarMenu db 0Dh,0Ah,'Pulse cualquier tecla para regresar al menu principal',0Dh,0Ah,'$'
+msgInvalido  db 0Dh,0Ah,'Presione la tecla 1 o 2',0Dh,0Ah,'$'
+msgRegresarMenu  db 0Dh,0Ah, "Presione una tecla para continuar", 0Dh,0Ah, "$"
 ;Flag BubbleSort
 ordenFlag db 0   ; 0 = Ascendente, 1 = Descendente

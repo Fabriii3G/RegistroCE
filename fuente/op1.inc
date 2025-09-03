@@ -321,6 +321,10 @@ NoFracScale:
     mov cl, [si+1]             ; longitud real
     xor ch, ch
     add si, 2                  ; SI -> primer carácter
+    cld                 ; por si acaso, copiar hacia adelante
+    mov  ax, ds
+    mov  es, ax         ; <— garantizar que ES=DS aquí también
+    ; (ahora sí el rep movsb copia dentro del segmento de datos)
     rep movsb
 
     ; 3.d) Terminar con CR, LF, '$'
