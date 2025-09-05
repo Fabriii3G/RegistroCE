@@ -84,13 +84,13 @@ InnerLoop:
     mov  bx, [di+4]
     mov  bp, [di+6]
 
-    ; --- Comparacion segun flag ---
+    ; --- Comparacion por flag ---
     mov  al, [ordenFlag]
     cmp  al, 0
     je   AscendenteCmp
 
 DescendenteCmp:
-    ; DESC: swap si nota[j] < nota[j+1]
+    ; swap si nota[j] < nota[j+1]
     cmp  dx, bp
     ja   NoSwap
     jb   DoSwap
@@ -99,7 +99,7 @@ DescendenteCmp:
     jmp DoSwap
 
 AscendenteCmp:
-    ; ASC: swap si nota[j] > nota[j+1]
+    ; swap si nota[j] > nota[j+1]
     cmp  dx, bp
     jb   NoSwap
     ja   DoSwap
@@ -109,7 +109,7 @@ AscendenteCmp:
 
 ; Intercambio de notas
 DoSwap:
-    ; Intercambio en notas32[j] <-> notas32[j+1]
+    ; Intercambio en notas32
     xchg ax, bx
     xchg dx, bp
     mov [di], ax
@@ -117,7 +117,7 @@ DoSwap:
     mov [di+4], bx
     mov [di+6], bp
 
-    ; Intercambio recOfs[j] <-> recOfs[j+1]
+    ; Intercambio recOfs
     mov ax, si
     shl ax, 1
     mov di, offset recOfs
@@ -139,15 +139,18 @@ NoSwap:
     mov  al, [ordenFlag]
     cmp  al, 0
     je   AscPrint
+
 DescPrint:
     mov  dx, offset msgOrdenDesc
     jmp ContinuePrint
+
 AscPrint:
     mov  dx, offset msgOrdenAsc
+
 ContinuePrint:
     call PrintString
-
     xor  bx, bx
+
 PrintLoop:
     mov  al, [studentsCount]
     cmp  bl, al

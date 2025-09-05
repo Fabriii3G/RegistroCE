@@ -6,7 +6,7 @@
 BuscarPorIndice proc
     call Cls
 
-    ; ¿Hay estudiantes?
+    ; Hay estudiantes?
     mov  al, [studentsCount]
     cmp  al, 0
     jne  PreguntaIndice
@@ -32,7 +32,7 @@ PreguntaIndice:
     mov  dl, 0Ah
     int  21h
 
-    ; Validar que haya al menos 1 char
+    ; Validar que hay al menos 1 char
     mov  si, offset bufferNum
     mov  bl, [si+1]              ; longitud
     cmp  bl, 0

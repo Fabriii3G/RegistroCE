@@ -123,7 +123,7 @@ UnicoEstudiante:
     mov  ax, [aprobados]
     call PrintNumber
 
-    ; etiqueta de porcentaje (saltando CRLF inicial)
+    ; porcentaje
     mov  ah, 02h
     mov  dl, ' '
     int  21h
@@ -134,6 +134,7 @@ UnicoEstudiante:
     mov  ax, [aprobados]      ; valor
     call CalcPorcentaje      
     call PrintNumber
+
     ; imprimir '%' al lado del número
     mov  ah, 02h
     mov  dl, '%'
@@ -153,11 +154,12 @@ UnicoEstudiante:
     int  21h
 
     mov  dx, offset msgPorcReprob
-    add  dx, 2                 ; salto los 0Dh,
+    add  dx, 2                
     call PrintString
     mov  ax, [reprobados]     ; valor
     call CalcPorcentaje       ; % reprobados
     call PrintNumber
+
     ; imprimir '%' al lado del número
     mov  ah, 02h
     mov  dl, '%'
@@ -173,7 +175,6 @@ MostrarEstadisticas endp
 ; Subrutina: Verifica si >= 70 escalado
 ; Entrada: DX:AX = notaEscalada (32-bit)
 ; Salida: incrementa "aprobados" o "reprobados"
-;----------------------------------------------------
 ;----------------------------------------------------
 CheckAprobado proc
     cmp dx, 006Ah
@@ -202,7 +203,7 @@ CalcPorcentaje proc
     mov bl, [studentsCount]   ; BL = total estudiantes
     cmp bl, 0
     je PorcentajeCero         ; Si no hay estudiantes, porcentaje = 0
-    mov bh, 0                 ; BX = studentsCount (16 bits)
+    mov bh, 0                 
     mov cx, 100
     xor dx, dx               
     mul cx                   
@@ -233,7 +234,7 @@ CalcAndPrintPromedio5 proc
     mov  dl, '0'            ; primer decimal
     mov  ah, 02h
     int  21h
-    xor  ax, ax             ; otros 4 decimales = 0000
+    xor  ax, ax             ; otros 4 decimales 
     call Print4Digits
     ret
 
@@ -248,7 +249,7 @@ CAP_Continuar:
 
 CAP_SumLoop:
     mov  ax, bx
-    shl  ax, 2                 ; offset = j * 4
+    shl  ax, 2                 ; offset 
     mov  si, offset notas32
     add  si, ax
     mov  ax, [si]              ; low
@@ -258,10 +259,7 @@ CAP_SumLoop:
     inc  bx
     loop CAP_SumLoop
 
-     ; --- REDONDEO AL 5.º DECIMAL ---
-    ; Queremos avgScaled = round( sumScaled / n )
-    ; Técnica entera: (sumScaled + floor(n/2)) / n
-
+    ; --- REDONDEO AL 5to DECIMAL ---
     mov  bl, [studentsCount]
     xor  bh, bh           ; BX = n
     mov  ax, bx
@@ -280,33 +278,33 @@ CAP_Dividir:
     ; dividir sumHi:sumLo / BX
     mov  ax,[sumHi]
     mov  dx,0
-    div  bx              ; AX = cociente alto, DX = resto
+    div  bx              ; AX = cociente alto
     mov  si,ax           ; tmpHi = cociente alto
 
     mov  ax,[sumLo]
-    ; DX = resto de la división anterior
+    ; DX = resto de la división
     div  bx              ; AX = cociente bajo
     mov  [tmpLo],ax
     mov  [tmpHi],si
 
 
-    ; === separar entero y 5 decimales SIN overflow ===
+    ; separar entero y 5 decimales 
     ; N = [tmpHi]:[tmpLo]  (promedio escalado ×100000)
 
-    ; 1) dividir por 10000 -> q10 (×10) y rem10 (0..9999)
+    ; dividir por 10000 -> q10 (×10) y rem10 (0..9999)
     mov  dx, [tmpHi]
     mov  ax, [tmpLo]
     mov  bx, 10000
-    div  bx                    ; AX = q10, DX = rem10
-    mov  si, dx                ; SI = rem10 (4 dígitos)
+    div  bx                    
+    mov  si, dx              
 
-    ; 2) dividir q10 por 10 -> entero y remA (0..9)
+    ; dividir q10 por 10 -> entero y remA (0..9)
     xor  dx, dx
     mov  bx, 10
-    div  bx                    ; AX = entero, DX = remA
+    div  bx                    
 
     ; imprimir entero
-    push dx                    ; guarda remA
+    push dx                    
     call PrintNumber
 
     ; imprimir '.'
@@ -314,13 +312,13 @@ CAP_Dividir:
     mov  dl, '.'
     int  21h
 
-    ; imprimir primer decimal (remA)
+    ; imprimir primer decimal 
     pop  dx
     add  dl, '0'
     mov  ah, 02h
     int  21h
 
-    ; imprimir los otros 4 decimales (rem10) con ceros a la izquierda
+    ; imprimir los otros 4 decimales con ceros a la izquierda
     mov  ax, si
     call Print4Digits
     ret
@@ -329,7 +327,7 @@ CalcAndPrintPromedio5 endp
 ;----------------------------------------------------
 ; Print4Digits
 ; Entrada: AX en 0..9999
-; Salida : imprime cuatro dígitos (con ceros a la izquierda)
+; Salida : imprime los ultimos 4 bits (toma en cuenta ceros)
 ;----------------------------------------------------
 Print4Digits proc
     push ax

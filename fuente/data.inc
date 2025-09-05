@@ -19,9 +19,9 @@ intVal         dw 0
 fracVal        dw 0
 
 ; --- 32-bit fraction (DWORD) ---
-frac    dd 0          ; 32 bits: low word en frac, high word en frac+2
-fracLo  equ frac      ; alias a la mitad baja (dirección frac)
-fracHi  equ frac+2    ; alias a la mitad alta (dirección frac+2)
+frac    dd 0          ; 32 bits
+fracLo  equ frac      ; mitad baja (dirección frac)
+fracHi  equ frac+2    ; mitad alta (dirección frac+2)
 
 
 ; almacenamiento
@@ -46,8 +46,5 @@ residuoLo      dw 0
 sumHi2         dw 0  ; para suma de 64 bits
 sumHi4         dw 0  ; para suma de 64 bits
 
-
-
-
-; varios
+;que opcion es?
 opcion         db ?
