@@ -3,6 +3,9 @@
 ;  - Bubble sort en notas32[] (32-bit)
 ;  - Permuta en paralelo recOfs[]
 ;  - Imprime lista ordenada
+;  - Referencia base: Ahmed  Ramadan,  Bubble  sort  on array  on Assembly Language Overflow, 
+;               Stack overflow https://stackoverflow.com/questions/30427394/bubble-sort-on-array-on-assembly-language
+;  - Generado parcialmente con ayuda de IA (ChatGPT).
 ;----------------------------------------------------
 OrdenarCalificacionesMenu proc
     ; --- verificar si hay al menos 2 registros ---
@@ -104,8 +107,9 @@ AscendenteCmp:
     jbe  NoSwap
     jmp DoSwap
 
+; Intercambio de notas
 DoSwap:
-    ; intercambio notas32[j] <-> notas32[j+1]
+    ; Intercambio en notas32[j] <-> notas32[j+1]
     xchg ax, bx
     xchg dx, bp
     mov [di], ax
@@ -113,14 +117,15 @@ DoSwap:
     mov [di+4], bx
     mov [di+6], bp
 
-    ; intercambio recOfs[j] <-> recOfs[j+1]
-    mov  ax, si
-    shl  ax, 1
-    mov  di, offset recOfs
-    add  di, ax
-    mov  ax, [di]
+    ; Intercambio recOfs[j] <-> recOfs[j+1]
+    mov ax, si
+    shl ax, 1
+    mov di, offset recOfs
+    add di, ax
+    mov ax, [di]
     xchg ax, [di+2]
     mov [di], ax
+
 
 NoSwap:
     inc  si

@@ -1,5 +1,11 @@
 ; ---------------------------------------------------------
 ; main.asm 16-bit .EXE (MASM/TASM)
+; Proyecto de ensamblador para gestion de estudiantes
+;
+; - Algunas rutinas fueron generadas con ayuda de Inteligencia Artificial (ChatGPT de OpenAI).
+; - El algoritmo de Bubble Sort fue adaptado desde:
+;       Fuente: Ahmed  Ramadan,  “Bubble  sort  on array  on Assembly Language Overflow, 
+;               Stack overflow https://stackoverflow.com/questions/30427394/bubble-sort-on-array-on-assembly-language
 ; ---------------------------------------------------------
 
 .MODEL small
@@ -31,7 +37,7 @@ MainLoop:
     call Cls
     call MostrarMenu
     call LeerOpcion
-    jmp  MainLoop         ; NO volver a "main" (evita reinit DS)
+    jmp  MainLoop         
 main ENDP
 
 ; ---------- UI / Menú ----------
@@ -53,7 +59,7 @@ MostrarMenu PROC
     ret
 MostrarMenu ENDP
 
-; ---------- Lógica de opciones ----------
+; ---------- Logica de opciones ----------
 LeerOpcion PROC
     mov ah, 01h
     int 21h

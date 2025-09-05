@@ -3,6 +3,7 @@
 ; - Formato: Nombre Apellido1 Apellido2 Nota
 ; - Nota: [0..100], entero o decimal con hasta 5 decimales
 ; - Digitar '9' solo -> regresa al menu
+;  - Generado parcialmente con ayuda de IA (ChatGPT).
 ;----------------------------------------------------
 IngresarCalificaciones proc
 IngresarLoop:
@@ -20,7 +21,7 @@ PideLinea:
     mov dx, offset msgIngresar
     call PrintString
 
-    ; Lee linea (AH=0Ah)
+    ; Lee línea (AH=0Ah)
     mov dx, offset bufferLinea
     mov ah, 0Ah
     int 21h
@@ -36,10 +37,10 @@ PideLinea:
 
     ; Verificar 3 palabras (Nombre + 2 apellidos)
     mov si, offset bufferLinea
-    mov cl, [si+1]       ; longitud linea
+    mov cl, [si+1]       ; longitud de la línea
     cmp cl, 0
-    je  NotaInvalida
-    add si, 2           
+    je  NotaInvalida     ; Si no hay texto
+    add si, 2            ; Saltar los 2 bytes de longitud
 
     mov bl, 0            ; contador de espacios
 ContarEspacios:
@@ -55,21 +56,20 @@ NoEspacio:
     jmp ContarEspacios
 
 VerificarEspacios:
-    cmp bl, 3            
-    jb  NombreInvalido   ; Intento de validacion
-    ; sigue flujo normal
-
+    cmp bl, 2            ; Verificar que haya 2 espacios (es decir, 3 partes)
+    jb  NombreInvalido   ; Si no hay 2 espacios, nombre inválido
+    ; Sigue flujo normal para procesar la entrada
 
 
 ValidaYGuarda:
-    ; si = buffer base
+    ; Si es válido, procesar la entrada como nombre y apellido
     mov si, offset bufferLinea
-    mov bl, [si+1]         ; len
+    mov bl, [si+1]         ; longitud
     mov di, si
     add di, 2              ; di -> primer char
     mov cx, bx             ; cx = len
-    add di, cx             ; di -> fin (1 char despues del ultimo)
-    dec di                 ; di -> ultimo char
+    add di, cx             ; di -> fin (1 char después del último)
+    dec di                 ; di -> último char
 
     ; Saltar espacios finales
 SkipTrail:
@@ -99,12 +99,16 @@ NoSpaceFound:
     add di, 2
 
 TocaValidar:
-    ; validacion y rango 
-    mov bp, 0                  ; 0 = antes de '.', 1 = despues
+    ; Validación y rango
+    mov bp, 0                  ; 0 = antes de '.', 1 = después
     mov byte ptr decCount, 0   ; # de decimales
     mov byte ptr fracNZ, 0     ; hubo decimal no-cero
-    mov word ptr intVal, 0     ; parte entera acumulada (0..100)   
-    mov word ptr fracVal, 0 
+    mov word ptr intVal, 0     ; parte entera acumulada (0..100)
+
+    ; --- fracción en 32 bits ---
+    mov word ptr fracLo, 0
+    mov word ptr fracHi, 0
+
 
 ValLoop:
     ; detener al final de la linea
@@ -128,47 +132,71 @@ ValLoop:
     cmp bp, 0
     jne AfterDotDigit
 
-    ; Acumular parte entera y revisar 100>
-    mov bl, al
-    sub bl, '0'                 ; BL = valor [0..9]
-    mov ax, [intVal]
-    mov bx, 10
-    mul bx                      
-    add ax, bx                  
+    ; Parte entera: intVal = intVal*10 + dígito
+    mov  ax, [intVal]
+    mov  bx, 10
+    mul  bx                 ; DX:AX = intVal*10   (intVal ≤ 100, cabe)
+    xor  bh, bh
+    mov  bl, [di]
+    sub  bl, '0'            ; BL = dígito 0..9
+    add  ax, bx
+    mov  [intVal], ax
+    cmp  ax, 100
+    ja   NotaFueraRango
+    jmp  NextChar
 
-
-AfterMulFix:
-    ; Rehacer la suma correctamente:
-    mov ax, [intVal]
-    mov bx, 10
-    mul bx                      
-    xor bh, bh
-    mov bl, [di]
-    sub bl, '0'
-    add ax, bx                  
-    mov [intVal], ax
-    cmp ax, 100
-    ja  NotaFueraRango
-    jmp NextChar
 
 AfterDotDigit:
-    inc byte ptr decCount
-    cmp byte ptr decCount, 5
-    ja  NotaInvalida
+    inc  byte ptr decCount
+    cmp  byte ptr decCount, 5
+    ja   NotaInvalida
 
-    mov bx, 10
-    mov ax, [fracVal]
-    mul bx               
-    xor bh, bh
-    mov bl, [di]
-    sub bl, '0'
-    add ax, bx
-    mov [fracVal], ax
+    ; --- guardar el dígito (0..9) en la pila ---
+    xor  ah, ah
+    mov  al, [di]
+    sub  al, '0'          ; AL = dígito 0..9
+    push ax               ; [stack] ... , digit
 
-    cmp al, '0'
-    je  NextChar
-    mov byte ptr fracNZ, 1
-    jmp NextChar
+    ; --- vamos a usar varios registros, salvamos ---
+    push bx
+    push dx
+    push si
+    push di
+
+    ; --- frac(32) = frac(32) * 10 ---
+    mov  ax, fracLo
+    mov  bx, 10
+    mul  bx              ; DX:AX = fracLo * 10
+    mov  si, ax          ; nuevo low
+    mov  di, dx          ; carry del low
+
+    mov  ax, fracHi
+    mov  bx, 10
+    mul  bx              ; DX:AX = fracHi * 10
+    add  ax, di
+    adc  dx, 0
+
+    mov  fracLo, si
+    mov  fracHi, ax
+
+    ; --- restaurar los regs que salvamos (digit sigue en la pila) ---
+    pop  di
+    pop  si
+    pop  dx
+    pop  bx
+
+    ; --- recuperar el dígito y sumarlo: frac += digit ---
+    pop  ax              ; AX = digit (0..9)
+    add  fracLo, ax
+    adc  fracHi, 0
+
+    ; marcar si hubo decimal no-cero
+    cmp  al, 0
+    je   NextChar
+    mov  byte ptr fracNZ, 1
+    jmp  NextChar
+
+
 
 
 CheckDot:
@@ -203,86 +231,85 @@ FinVal:
     jne NotaFueraRango         ; 100.x con x!=0    
     
 RangoOK:
-    ; 1) Construir notaEscalada 
-    ; 1.a) intVal * 100000 
-    mov ax, [intVal]
-    mov bx, 10000
-    mul bx              ; (32-bit)
+    ; ============================
+    ; 1) intVal * 100000
+    ; ============================
+    ; primero intVal * 10000
+    mov  ax, [intVal]       ; 0..100
+    mov  bx, 086A0h         ; 34464
+    mul  bx                 ; DX:AX = intVal * 34464   (32-bit)
+    add  dx, [intVal]       ; + intVal * 65536  => DX:AX = intVal * 100000
 
-    
-    push dx
-    push ax
-    pop ax
-    pop dx
-    mov si, ax          ; guardar original lo
-    mov di, dx          ; guardar original hi
+    ; guarda ENTERO escalado (para sumarle la fracción luego)
+    push dx                 ; intPartHi
+    push ax                 ; intPartLo
 
-    ; resultado = original << 1
-    shl ax, 1
-    rcl dx, 1
-    push dx             ; guardar (<<1) hi
-    push ax             ; guardar (<<1) lo
 
-    mov ax, si
-    mov dx, di
-    shl ax, 1
-    rcl dx, 1
-    shl ax, 1
-    rcl dx, 1
-    shl ax, 1
-    rcl dx, 1          
+    ; ============================
+    ; 2) fracVal * 10^(5 - decCount)
+    ; ============================
+    cmp  bp, 0                   ; ¿hubo '.' ?
+    jne  DoFracScale
+    ; si NO hubo '.', frac ya está en 0 por la init en TocaValidar
+    jmp  NoFracScale
 
-    ; sumar (<<1)
-    pop si              ; (<<1) lo
-    pop di              ; (<<1) hi
-    add ax, si
-    adc dx, di          ; DX:AX = intVal*100000
-    push dx             ; guarda intPartHi
-    push ax             ; guarda intPartLo
-
-    ; 1.b) LOOP 
-    xor  dx, dx
-    mov  ax, [fracVal]          
-    xor  cx, cx
+DoFracScale:
+    ; frac(32) *= 10^(5 - decCount)
     mov  cl, 5
-    sub  cl, [decCount]         ; CL = 5 - decCount
+    sub  cl, [decCount]
     jz   NoFracScale
 
 FracScaleLoop:
-    ; Guardar original en SI:DI
+    ; frac(32) *= 10
+    push ax
+    push bx
+    push dx
+    push si
+    push di
+
+    mov  ax, fracLo
+    mov  bx, 10
+    mul  bx              ; DX:AX = fracLo * 10
     mov  si, ax
     mov  di, dx
 
-    ; resultado = original << 1
-    shl  ax, 1
-    rcl  dx, 1
-    push dx
-    push ax                     ; pila
+    mov  ax, fracHi
+    mov  bx, 10
+    mul  bx              ; DX:AX = fracHi * 10
+    add  ax, di
+    adc  dx, 0
 
-    ; volver al original
-    mov  ax, si
-    mov  dx, di
-    shl  ax, 1
-    rcl  dx, 1
-    shl  ax, 1
-    rcl  dx, 1
-    shl  ax, 1
-    rcl  dx, 1                  
+    mov  fracLo, si
+    mov  fracHi, ax
 
-    ; sumar (<<1)
-    pop  si                     
-    pop  di                    
+    pop  di
+    pop  si
+    pop  dx
+    pop  bx
+    pop  ax
+
+    dec  cl
+    jnz  FracScaleLoop
+
+NoFracScale:
+    ; ============================
+    ; 3) suma: notaEscalada = intPart(32) + frac(32)
+    ; ============================
+
+    ; recuperar entero escalado (que dejaste en la pila)
+    pop  si               ; intPartLo
+    pop  di               ; intPartHi
+
+    ; cargar fracción
+    mov  ax, fracLo
+    mov  dx, fracHi
+
+    ; nota = entero + fracción  -> DX:AX
     add  ax, si
     adc  dx, di
 
-    loop FracScaleLoop
-NoFracScale:
-    ; 1.c) Sumar ambas partes / notaEscalada
-    pop si              ; intPartLo
-    pop di              ; intPartHi
-    add ax, si
-    adc dx, di          ; notaEscalada (32-bit)
 
+SumParts:
     ; Guardar notaEscalada en notas32[studentsCount]
     mov bx, 0
     mov bl, [studentsCount]

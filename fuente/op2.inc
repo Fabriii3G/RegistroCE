@@ -3,6 +3,7 @@
 ;   - Nota más alta y más baja
 ;   - Cantidad de estudiantes aprobados (nota >= 70)
 ;   - Imprime la línea completa del estudiante
+;   - Generado parcialmente con ayuda de IA (ChatGPT).
 ;----------------------------------------------------
 MostrarEstadisticas proc
     call Cls
@@ -88,9 +89,9 @@ NextJ:
 UnicoEstudiante:
     ; Promedio 
     call CRLF
-    mov  dx, offset msgProm     ; "Promedio general: "
+    mov  dx, offset msgProm
     call PrintString
-    call MostrarPromedioGeneral ; imprime XX.YYYYY
+    call CalcAndPrintPromedio5
 
     ; Línea en blanco
     call CRLF
@@ -214,88 +215,98 @@ CalcPorcentaje endp
 
 
 ;----------------------------------------------------
-; MostrarPromedioGeneral
-; - Suma notas32[] (32-bit, escaladas por 100000)
-; - Divide entre studentsCount para obtener promedio escalado
-; - Convierte y muestra con 2 decimales: XX.XX (redondeado)
-;   (sin perder precisión del escalado)
+; CalcAndPrintPromedio5
+; Suma notas32[] (32-bit, escaladas ×100000),
+; divide entre studentsCount y imprime: ENTERO '.' 5 decimales
+; Sin overflow al formar los 5 decimales.
 ;----------------------------------------------------
-MostrarPromedioGeneral proc
-    ; Si no hay estudiantes, muestra "0.00"
+CalcAndPrintPromedio5 proc
+    ; Si no hay estudiantes, imprime 0.00000
     mov  al, [studentsCount]
     cmp  al, 0
-    jne  MP_Continuar
+    jne  CAP_Continuar
     mov  ax, 0
     call PrintNumber
     mov  ah, 02h
     mov  dl, '.'
     int  21h
-    mov  ax, 0
-    call Print2Digits
+    mov  dl, '0'            ; primer decimal
+    mov  ah, 02h
+    int  21h
+    xor  ax, ax             ; otros 4 decimales = 0000
+    call Print4Digits
     ret
 
-MP_Continuar:
-    ; sum = 0 (32-bit)
+CAP_Continuar:
+    ; --- suma 32-bit ---
     mov  word ptr [sumLo], 0
     mov  word ptr [sumHi], 0
+    xor  bx, bx
+    xor  cx, cx                ; *** FIX: limpia todo CX
+    mov  cl, [studentsCount]   ; CL = n (0..15)
+    jcxz CAP_Dividir
 
-    ; loop j=0
-    xor  bx, bx                      ; j = 0
-    mov  cl, [studentsCount]
-    xor  ch, ch
-    jcxz MP_ListoSum
-
-MP_LoopSum:
+CAP_SumLoop:
     mov  ax, bx
-    shl  ax, 2                       
+    shl  ax, 2                 ; offset = j * 4
     mov  si, offset notas32
     add  si, ax
-
-    ; sum += notas32[j]
-    mov  ax, [si]                    ; low
+    mov  ax, [si]              ; low
     add  [sumLo], ax
-    mov  ax, [si+2]                  ; high
+    mov  ax, [si+2]            ; high
     adc  [sumHi], ax
-
     inc  bx
-    loop MP_LoopSum
+    loop CAP_SumLoop
 
-MP_ListoSum:
-    mov  bl, [studentsCount]         ; divisor (<=15)
-    xor  bh, bh
-    mov  ax, [sumHi]                 ; dividir la parte alta
-    xor  dx, dx
-    div  bx                          
-    mov  [tmpHi], ax                 ; guardar q1
-    mov  ax, [sumLo]                 
-    div  bx                          
-    mov  [tmpLo], ax                 
+     ; --- REDONDEO AL 5.º DECIMAL ---
+    ; Queremos avgScaled = round( sumScaled / n )
+    ; Técnica entera: (sumScaled + floor(n/2)) / n
 
-    ; Redondeo: sumamos 500 antes de dividir entre 1000.
+    mov  bl, [studentsCount]
+    xor  bh, bh           ; BX = n
+    mov  ax, bx
+    shr  ax, 1            ; AX = floor(n/2)
+
+    ; sumHi:sumLo += AX
+    add  [sumLo], ax
+    adc  [sumHi], 0
+
+
+CAP_Dividir:
+    mov  bl,[studentsCount]
+    xor  bh,bh
+    mov  bx,bx           ; BX = n
+
+    ; dividir sumHi:sumLo / BX
+    mov  ax,[sumHi]
+    mov  dx,0
+    div  bx              ; AX = cociente alto, DX = resto
+    mov  si,ax           ; tmpHi = cociente alto
+
+    mov  ax,[sumLo]
+    ; DX = resto de la división anterior
+    div  bx              ; AX = cociente bajo
+    mov  [tmpLo],ax
+    mov  [tmpHi],si
+
+
+    ; === separar entero y 5 decimales SIN overflow ===
+    ; N = [tmpHi]:[tmpLo]  (promedio escalado ×100000)
+
+    ; 1) dividir por 10000 -> q10 (×10) y rem10 (0..9999)
+    mov  dx, [tmpHi]
     mov  ax, [tmpLo]
-    add  ax, 500                     
-    mov  [tmpLo], ax
-    mov  ax, [tmpHi]
-    adc  ax, 0
-    mov  [tmpHi], ax
+    mov  bx, 10000
+    div  bx                    ; AX = q10, DX = rem10
+    mov  si, dx                ; SI = rem10 (4 dígitos)
 
-    mov  ax, [tmpHi]
+    ; 2) dividir q10 por 10 -> entero y remA (0..9)
     xor  dx, dx
-    mov  bx, 1000
-    div  bx                          
-    mov  [tmpHi], ax
-    mov  ax, [tmpLo]
-    div  bx                          
-    mov  [tmpLo], ax                
-
-    ;verificar rango del promedio (no sirve)
-    mov  ax, [tmpLo]
-    xor  dx, dx
-    mov  bx, 100
-    div  bx                          
+    mov  bx, 10
+    div  bx                    ; AX = entero, DX = remA
 
     ; imprimir entero
-    push dx                          ; guardar dec
+    push dx                    ; guarda remA
     call PrintNumber
 
     ; imprimir '.'
@@ -303,45 +314,52 @@ MP_ListoSum:
     mov  dl, '.'
     int  21h
 
-    ; recuperar decimales y mostrar 2 dígitos
-    pop  ax
-    call Print2Digits
+    ; imprimir primer decimal (remA)
+    pop  dx
+    add  dl, '0'
+    mov  ah, 02h
+    int  21h
 
+    ; imprimir los otros 4 decimales (rem10) con ceros a la izquierda
+    mov  ax, si
+    call Print4Digits
     ret
-MostrarPromedioGeneral endp
+CalcAndPrintPromedio5 endp
 
 ;----------------------------------------------------
-; Print2Digits
-; Entrada: AX en 0..99
-; Salida : imprime dos dígitos (con 0 a la izquierda si < 10)
+; Print4Digits
+; Entrada: AX en 0..9999
+; Salida : imprime cuatro dígitos (con ceros a la izquierda)
 ;----------------------------------------------------
-Print2Digits proc
+Print4Digits proc
     push ax
     push bx
-   
+    push cx
+    push dx
+
     mov  bx, 10
+    mov  cx, 4
+
+P4_Loop:
     xor  dx, dx
-    div  bx             
+    div  bx
+    push dx
+    loop P4_Loop
 
-    push dx             ; guardar unidades (DX) en la pila
-
-    ; imprimir decenas 
-    mov  dl, al
+    mov  cx, 4
+P4_Out:
+    pop  dx
     add  dl, '0'
     mov  ah, 02h
     int  21h
+    loop P4_Out
 
-    ; recuperar unidades en DX y convertir a carácter
-    pop  dx             
-    add  dl, '0'
-    mov  ah, 02h
-    int  21h
-
+    pop  dx
+    pop  cx
     pop  bx
     pop  ax
     ret
-Print2Digits endp
-
+Print4Digits endp
 
 
 ; ---- Variables auxiliares ----

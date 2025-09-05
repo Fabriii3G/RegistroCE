@@ -25,6 +25,7 @@ msgAprobados  db 13,10,'Cantidad de estudiantes aprobados: $'
 msgReprobados  db 13,10,'Cantidad de estudiantes reprobados: $'
 msgPorcAprob   db 13,10,'Porcentaje aprobados: $'
 msgPorcReprob  db 13,10,'Porcentaje reprobados: $'
+msgProm db 'Promedio general: $'
 
 
 ; --- Opcion 3 (buscar por ?ndice) ---
@@ -45,6 +46,6 @@ msgOrdenAsc       db 0Dh,0Ah,'Calificaciones ordenadas (ascendente):',0Dh,0Ah,'$
 msgOrdenDesc       db 0Dh,0Ah,'Calificaciones ordenadas (descendente):',0Dh,0Ah,'$'
 msgOrdenNoEnough  db 0Dh,0Ah,'Se requieren al menos 2 estudiantes para ordenar.',0Dh,0Ah,'$'
 msgInvalido  db 0Dh,0Ah,'Presione la tecla 1 o 2',0Dh,0Ah,'$'
-msgRegresarMenu  db 0Dh,0Ah, "Presione una tecla para continuar", 0Dh,0Ah, "$"
+msgRegresarMenu  db 0Dh,0Ah, "Presione cualquier tecla para continuar", 0Dh,0Ah, "$"
 ;Flag BubbleSort
 ordenFlag db 0   ; 0 = Ascendente, 1 = Descendente
