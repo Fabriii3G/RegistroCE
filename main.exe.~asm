@@ -4,7 +4,7 @@
 ;
 ; - Algunas rutinas fueron generadas con ayuda de Inteligencia Artificial (ChatGPT de OpenAI).
 ; - El algoritmo de Bubble Sort fue adaptado desde:
-;       Fuente: Ahmed  Ramadan,  “Bubble  sort  on array  on Assembly Language Overflow,
+;       Fuente: Ahmed  Ramadan,  Bubble  sort  on array  on Assembly Language Overflow,
 ;               Stack overflow https://stackoverflow.com/questions/30427394/bubble-sort-on-array-on-assembly-language
 ; ---------------------------------------------------------
 

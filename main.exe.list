@@ -2,7 +2,7 @@ EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
  
 main.exe -- emu8086 assembler version: 4.08  
  
-[ 5/9/2025  --  10:32:08 ] 
+[ 5/9/2025  --  19:41:56 ] 
  
 ===================================================================================================
 [LINE]     LOC: MACHINE CODE                          SOURCE
@@ -14,7 +14,7 @@ main.exe -- emu8086 assembler version: 4.08
 [   4]        :                                       ;
 [   5]        :                                       ; - Algunas rutinas fueron generadas con ayuda de Inteligencia Artificial (ChatGPT de OpenAI).
 [   6]        :                                       ; - El algoritmo de Bubble Sort fue adaptado desde:
-[   7]        :                                       ;       Fuente: Ahmed  Ramadan,  “Bubble  sort  on array  on Assembly Language Overflow,
+[   7]        :                                       ;       Fuente: Ahmed  Ramadan,  Bubble  sort  on array  on Assembly Language Overflow,
 [   8]        :                                       ;               Stack overflow https://stackoverflow.com/questions/30427394/bubble-sort-on-array-on-assembly-language
 [   9]        :                                       ; ---------------------------------------------------------
 [  10]        :                                       
@@ -133,11 +133,11 @@ main.exe -- emu8086 assembler version: 4.08
                 70 61 72 61 20 6F 72 64 65 6E 61 72 
                 2E 0D 0A 24 0D 0A 50 72 65 73 69 6F 
                 6E 65 20 6C 61 20 74 65 63 6C 61 20 
-                31 20 6F 20 32 0D 0A 24 0D 0A 50 72 
-                65 73 69 6F 6E 65 20 63 75 61 6C 71 
-                75 69 65 72 20 74 65 63 6C 61 20 70 
-                61 72 61 20 63 6F 6E 74 69 6E 75 61 
-                72 0D 0A 24 00                      
+                31 20 6F 20 32 0D 0A 24 0D 0A 50 75 
+                6C 73 65 20 63 75 61 6C 71 75 69 65 
+                72 20 74 65 63 6C 61 20 70 61 72 61 
+                20 63 6F 6E 74 69 6E 75 61 72 0D 0A 
+                24 00                               
 [  19]        :                                       INCLUDE data.inc         ; variables (ej. 'opcion', contadores, etc.)
 [  20]        :                                       
 [  21]        :                                       .CODE
@@ -191,7 +191,7 @@ main.exe -- emu8086 assembler version: 4.08
 [  63]    1640:                                       LeerOpcion PROC
 [  64]    1640: B4 01                                 mov ah, 01h
 [  65]    1642: CD 21                                 int 21h
-[  66]    1644: A2 34 0E                              mov opcion, al
+[  66]    1644: A2 31 0E                              mov opcion, al
 [  67]        :                                       
 [  68]    1647: 3C 31                                 cmp al, '1'
 [  69]    1649: 75 03 E9 3C F9                        je  IngresarCalificaciones
@@ -211,7 +211,7 @@ main.exe -- emu8086 assembler version: 4.08
 [  83]        :                                       ; Mensaje de opción inválida
 [  84]    1667: BA A0 00                              mov dx, offset salto
 [  85]    166A: E8 D3 F8                              call PrintString
-[  86]    166D: 8A 16 34 0E                           mov dl, opcion
+[  86]    166D: 8A 16 31 0E                           mov dl, opcion
 [  87]    1671: B4 02                                 mov ah, 02h
 [  88]    1673: CD 21                                 int 21h
 [  89]    1675: BA AF 00                              mov dx, offset salto2
@@ -253,8 +253,8 @@ EXE HEADER - bytes from 0000 to 01FF inclusive.
 000F: 00      -   SS - stack segment (h.byte)
 0010: 00      -   SP - stack pointer (l.byte)
 0011: 01      -   SP - stack pointer (h.byte)
-0012: 44      -   check sum (l.byte)
-0013: C8      -   check sum (h.byte)
+0012: 3E      -   check sum (l.byte)
+0013: 07      -   check sum (h.byte)
 0014: C0      -   IP - instruction pointer (l.byte)
 0015: 06      -   IP - instruction pointer (h.byte)
 0016: F4      -   CS - code segment (l.byte)
